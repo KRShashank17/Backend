@@ -1,3 +1,6 @@
 # Backend - Industry Level 
 
-![image](https://github.com/KRShashank17/Backend/assets/108650155/b20b16d3-a2fa-4bdc-8520-da99f0e621c4)
+![image](https://github.com/KRShashank17/Backend/assets/108650155/50e87224-ac49-4a8a-9cb6-229593649261)
+
+[Model Link](https://app.eraser.io/workspace/MiksaRNHW9GtxAyGr7CM)
+
