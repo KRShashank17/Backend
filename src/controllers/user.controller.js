@@ -36,11 +36,19 @@ const userController = asyncHandler(async (req, res) => {
     // console.log('\n\n');
     // console.log(req.files);          // just for reference
 
+    // avatar is required field
     const avatarPath = req.files?.avatar[0]?.path ;                         // multer provided "files" option
-    const coverImagePath = req.files?.coverImage[0]?.path ;
     if (!avatarPath) {
         throw new ApiError(400 , "Avatar field is required ");
     }
+    
+    // coverImage is optional field
+    // const coverImagePath = req.files?.coverImage[0]?.path ;      // shows error - can't access 0th index - if empty
+    let coverImagePath;
+    if (req.files?.coverImage) {
+        coverImagePath = req.files.coverImage[0].path;
+    }
+    
 
     //5
     const avatar = await uploadOnCloudinary(avatarPath);
