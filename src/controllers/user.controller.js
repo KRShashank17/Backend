@@ -32,7 +32,7 @@ const userController = asyncHandler(async (req, res) => {
     }
 
     //4
-    const avatarPath = req.files?.avatar[0]?.path ;
+    const avatarPath = req.files?.avatar[0]?.path ;                         // multer provided "files" option
     const coverImagePath = req.files?.coverImage[0]?.path ;
     if (!avatarPath) {
         throw new ApiError(400 , "Avatar field is required ");
@@ -59,7 +59,7 @@ const userController = asyncHandler(async (req, res) => {
     )
 
     //7
-    const finalUser = await User.findById( user._id ).select(
+    const finalUser = await User.findById( user._id ).select(                   // to remove use select option  -> (-ve) symbol 
                         "-password -refreshToken"
                     ) 
     if (!finalUser){
