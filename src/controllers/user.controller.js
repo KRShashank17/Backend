@@ -1,8 +1,8 @@
 import {asyncHandler} from "../utils/asyncHandler.js"
-import {ApiError} from "../utils/apiError.js"
+import {ApiError} from "../utils/ApiError.js"
 import {User} from "../models/user.model.js"
 import {uploadOnCloudinary} from '../utils/cloudinary.js'
-import {apiResponse} from "../utils/apiResponse.js"
+import {ApiResponse} from "../utils/apiResponse.js"
 
 const userController = asyncHandler(async (req, res) => {
     // 1. Get Details
@@ -32,6 +32,10 @@ const userController = asyncHandler(async (req, res) => {
     }
 
     //4
+    // console.log(req.body);           
+    // console.log('\n\n');
+    // console.log(req.files);          // just for reference
+
     const avatarPath = req.files?.avatar[0]?.path ;                         // multer provided "files" option
     const coverImagePath = req.files?.coverImage[0]?.path ;
     if (!avatarPath) {
@@ -67,7 +71,7 @@ const userController = asyncHandler(async (req, res) => {
     }
 
     //8
-    res.status(201).json(apiResponse(200 ,finalUser , "User Registration Successful"))
+    res.status(201).json( new ApiResponse(200 ,finalUser , "User Registration Successful"))
 })
 
 export {userController}
