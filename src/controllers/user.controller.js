@@ -86,16 +86,17 @@ const userRegister = asyncHandler(async (req, res) => {
 const generateRefreshTokenAccessToken = async (userId) => {
     try {
         const curruser = await User.findById(userId);
-        const refreshToken = curruser.generateRefreshToken();
-        const accessToken = curruser.generateAccessToken();
-
+        const accessToken = curruser.generateAccessToken()
+        const refreshToken = curruser.generateRefreshToken()
         // save to DB
         curruser.refreshToken = refreshToken;
-        curruser.save({ validateBeforeSave : false })       //! so that "required" fields doesn't cause problem
+        await curruser.save({ validateBeforeSave : false })       //! so that "required" fields doesn't cause problem
 
+        console.log("Before return");
         return { refreshToken, accessToken }
+
     } catch (error) {
-        throw new ApiError(500 , "Something went wrong - while generating Refresh , Access Token");
+        throw new ApiError(500 , error ||  "Something went wrong - while generating Refresh , Access Token");
     }
 }
 
@@ -108,9 +109,11 @@ const userLogin = asyncHandler( async (req, res) => {
 
     // 1
     const { username, email, password } = req.body ;
+    // console.log(username);
 
     // 2
-    if (!username || !email){
+    // if (!username && !email){            // also works
+    if (! (username || email)){
         throw new ApiError(400 , "Enter Valid Credentials");
     }
     
@@ -127,9 +130,10 @@ const userLogin = asyncHandler( async (req, res) => {
     if(!isValidPassword){
         throw new ApiError(401 , "Enter Valid Credentials");
     }
-
+    
     // 5
     const {refreshToken , accessToken } = await generateRefreshTokenAccessToken(curruser._id);
+    // console.log(isValidPassword);
 
     const options = {
         httpOnly : true,        //* can only be altered from SERVER side
@@ -144,14 +148,35 @@ const userLogin = asyncHandler( async (req, res) => {
     .cookie("accessToken", accessToken, options)
     .json(
         new ApiResponse(
-                    200,
-                    {
-                        loginUser , accessToken , refreshToken
-                    },
-                    "Login Successful"
-                    )
+            200,
+            {
+                user : loginUser , accessToken , refreshToken
+            },
+            "Login Successful"
+        )
     )
 
 } )
 
-export {userRegister , userLogin}
+const userLogout = asyncHandler( async(req,res) => {
+        // remove refresh Token
+    await User.findByIdAndUpdate(
+        req.user._id ,
+        {
+            $unset : { refreshToken : 1 }
+        },
+        { new : true }
+    )
+    
+        // clear cookie
+    const options = {
+        httpOnly : true,
+        secure : true
+    }
+    return res.status(200)
+    .clearCookie("refreshToken" , options)
+    .clearCookie("accessToken" , options)
+    .json( new ApiResponse(200 , {} , "Logout Successful") )
+} )
+
+export {userRegister , userLogin , userLogout}
