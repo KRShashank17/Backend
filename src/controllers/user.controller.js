@@ -5,6 +5,23 @@ import {uploadOnCloudinary} from '../utils/cloudinary.js'
 import {ApiResponse} from "../utils/apiResponse.js"
 import jwt from "jsonwebtoken"
 
+const generateRefreshTokenAccessToken = async (userId) => {
+    try {
+        const curruser = await User.findById(userId);
+        const accessToken = curruser.generateAccessToken()
+        const refreshToken = curruser.generateRefreshToken()
+        // save to DB
+        curruser.refreshToken = refreshToken;
+        await curruser.save({ validateBeforeSave : false })       //! so that "required" fields doesn't cause problem
+
+        return { refreshToken, accessToken }
+
+    } catch (error) {
+        throw new ApiError(500 , error ||  "Something went wrong - while generating Refresh , Access Token");
+    }
+}
+
+
 const userRegister = asyncHandler(async (req, res) => {
     // 1. Get Details
     // 2. Check if fields are empty
@@ -82,23 +99,6 @@ const userRegister = asyncHandler(async (req, res) => {
     //8
     res.status(201).json( new ApiResponse(200 ,finalUser , "User Registration Successful"))
 })
-
-
-const generateRefreshTokenAccessToken = async (userId) => {
-    try {
-        const curruser = await User.findById(userId);
-        const accessToken = curruser.generateAccessToken()
-        const refreshToken = curruser.generateRefreshToken()
-        // save to DB
-        curruser.refreshToken = refreshToken;
-        await curruser.save({ validateBeforeSave : false })       //! so that "required" fields doesn't cause problem
-
-        return { refreshToken, accessToken }
-
-    } catch (error) {
-        throw new ApiError(500 , error ||  "Something went wrong - while generating Refresh , Access Token");
-    }
-}
 
 const userLogin = asyncHandler( async (req, res) => {
     // 1. get details from body
@@ -190,6 +190,10 @@ const refreshAccessToken = asyncHandler( async(req,res) => {
         const curruser = await User.findById(decodedToken?._id)
         if (!curruser){
             throw new ApiError(401 , "Unauthorized Access");
+        }
+
+        if (incomingRefreshToken !== curruser.refreshToken){
+            throw new ApiError(401, "Refresh Token doesn't match ")
         }
 
         const {newrefreshToken, accessToken } = await generateRefreshTokenAccessToken(curruser._id);
