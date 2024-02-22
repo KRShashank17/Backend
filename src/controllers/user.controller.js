@@ -4,7 +4,7 @@ import {User} from "../models/user.model.js"
 import {uploadOnCloudinary} from '../utils/cloudinary.js'
 import {ApiResponse} from "../utils/apiResponse.js"
 
-const userController = asyncHandler(async (req, res) => {
+const userRegister = asyncHandler(async (req, res) => {
     // 1. Get Details
     // 2. Check if fields are empty
     // 3. Check if user is already registered
@@ -82,4 +82,76 @@ const userController = asyncHandler(async (req, res) => {
     res.status(201).json( new ApiResponse(200 ,finalUser , "User Registration Successful"))
 })
 
-export {userController}
+
+const generateRefreshTokenAccessToken = async (userId) => {
+    try {
+        const curruser = await User.findById(userId);
+        const refreshToken = curruser.generateRefreshToken();
+        const accessToken = curruser.generateAccessToken();
+
+        // save to DB
+        curruser.refreshToken = refreshToken;
+        curruser.save({ validateBeforeSave : false })       //! so that "required" fields doesn't cause problem
+
+        return { refreshToken, accessToken }
+    } catch (error) {
+        throw new ApiError(500 , "Something went wrong - while generating Refresh , Access Token");
+    }
+}
+
+const userLogin = asyncHandler( async (req, res) => {
+    // 1. get details from body
+    // 2. Check if username or email is present/sent
+    // 3. Check if USER exists - else Reg
+    // 4. Check if password is valid
+    // 5. ALL OK -> generate  RefeshToken(long-time + DB) ,AccessToken(short-time)
+
+    // 1
+    const { username, email, password } = req.body ;
+
+    // 2
+    if (!username || !email){
+        throw new ApiError(400 , "Enter Valid Credentials");
+    }
+    
+    // 3
+    const curruser = await User.findOne({
+        $or : [{username} , {email}]
+    })
+    if (!curruser){
+        throw new ApiError(404 , "User not found - PLS REGISTER");
+    }
+
+    // 4
+    const isValidPassword = await curruser.isPasswordCorrect(password);
+    if(!isValidPassword){
+        throw new ApiError(401 , "Enter Valid Credentials");
+    }
+
+    // 5
+    const {refreshToken , accessToken } = await generateRefreshTokenAccessToken(curruser._id);
+
+    const options = {
+        httpOnly : true,        //* can only be altered from SERVER side
+        secure : true
+    }
+
+    const loginUser = await User.findById(curruser._id)
+                                .select("-password -refreshToken");
+
+    return res.status(200)
+    .cookie("refreshToken" , refreshToken , options)
+    .cookie("accessToken", accessToken, options)
+    .json(
+        new ApiResponse(
+                    200,
+                    {
+                        loginUser , accessToken , refreshToken
+                    },
+                    "Login Successful"
+                    )
+    )
+
+} )
+
+export {userRegister , userLogin}
