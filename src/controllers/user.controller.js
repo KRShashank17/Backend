@@ -219,6 +219,7 @@ const refreshAccessToken = asyncHandler( async(req,res) => {
     }
 })
 
+        // Updating values -->
 const changePassword = asyncHandler( async(req,res) => {
     const { oldPassword , newPassword } = req.body ;
 
@@ -271,11 +272,71 @@ const updateUserDetails = asyncHandler( async(req,res) => {
     )
 })
 
+const updateAvatar = asyncHandler( async(req,res) => {
+    const avatarLocalPath = req.file?.path
+    if (!avatarLocalPath){
+        throw new ApiError(400 , "Please select an image");
+    }
+
+    const newAvatar = await uploadOnCloudinary(avatarLocalPath);
+    if (!newAvatar){
+        throw new ApiError(500 , "Something went wrong - while updating/uploading avatar to Cloudinary");
+    }
+
+    const curruser = await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $set : {
+                avatar : newAvatar.url
+            }
+        },
+        {
+            new : true
+        }
+    ).select("-password")
+
+    return res.status(200)
+    .json( 
+        new ApiResponse(200 , curruser , "Avatar Updated Successfully")
+    )
+})
+
+const updateCoverImage = asyncHandler( async(req,res) => {
+    const coverImageLocalPath = req.file?.path
+    if (!coverImageLocalPath){
+        throw new ApiError(400 , "Please select an image");
+    }
+
+    const newCoverImage = await uploadOnCloudinary(coverImageLocalPath);
+    if (!newCoverImage){
+        throw new ApiError(500 , "Something went wrong - while updating/uploading avatar to Cloudinary");
+    }
+
+    const curruser = await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $set : {
+                avatar : newCoverImage.url
+            }
+        },
+        {
+            new : true
+        }
+    ).select("-password")
+
+    return res.status(200)
+    .json( 
+        new ApiResponse(200 , curruser , "Cover Image Updated Successfully")
+    )
+})
+
 export {userRegister, 
     userLogin , 
     userLogout , 
     refreshAccessToken ,
     changePassword,
     getCurrentUser,
-    updateUserDetails
+    updateUserDetails,
+    updateAvatar,
+    updateCoverImage
 }
