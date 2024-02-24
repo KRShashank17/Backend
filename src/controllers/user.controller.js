@@ -219,4 +219,21 @@ const refreshAccessToken = asyncHandler( async(req,res) => {
     }
 })
 
+const changePassword = asyncHandler( async(req,res) => {
+    const { oldPassword , newPassword } = req.body ;
+
+    const curruser = await User.findById(req.user._id)
+    const doesPasswordMatch = await curruser.isPasswordCorrect(oldPassword);
+    
+    if(!doesPasswordMatch){
+        throw new ApiError(401 , "Enter Valid Credentials");
+    }
+
+    curruser.password = newPassword;
+    await curruser.save({validateBeforeSave : false});
+
+    return res.status(200)
+    .json( new ApiResponse(200 , {} , "Password Changed Successfully") )
+});
+
 export {userRegister , userLogin , userLogout , refreshAccessToken}
