@@ -25,4 +25,22 @@ const uploadOnCloudinary = async (localFilePath) => {
     }
 }
 
-export { uploadOnCloudinary}
+const destroyOnCloudinary = async (todestroyUrl) => {
+    try {
+        if (!todestroyUrl) return null;
+                //* (.png or .jpg or .gif) files preceded by [word or dot or $ sign]
+        const regex = /[\w\.\$]+(?=.png|.jpg|.gif)/;
+        let matches = regex.exec(todestroyUrl);     //* exec() -> returns "array" of matches
+
+        if ((matches) !== null) {
+            let matchingString = matches[0];       //* matching substring
+            await cloudinary.uploader.destroy(matchingString)
+                .then(result => console.log(result));
+        }
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+
+export { uploadOnCloudinary , destroyOnCloudinary}

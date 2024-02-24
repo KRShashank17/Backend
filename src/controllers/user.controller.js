@@ -1,7 +1,7 @@
 import {asyncHandler} from "../utils/asyncHandler.js"
 import {ApiError} from "../utils/ApiError.js"
 import {User} from "../models/user.model.js"
-import {uploadOnCloudinary} from '../utils/cloudinary.js'
+import {destroyOnCloudinary, uploadOnCloudinary} from '../utils/cloudinary.js'
 import {ApiResponse} from "../utils/apiResponse.js"
 import jwt from "jsonwebtoken"
 
@@ -227,7 +227,7 @@ const changePassword = asyncHandler( async(req,res) => {
     const doesPasswordMatch = await curruser.isPasswordCorrect(oldPassword);
     
     if(!doesPasswordMatch){
-        throw new ApiError(401 , "Enter Valid Credentials");
+        throw new ApiError(400 , "Enter Valid Credentials");
     }
 
     curruser.password = newPassword;
@@ -238,7 +238,8 @@ const changePassword = asyncHandler( async(req,res) => {
 });
 
 const getCurrentUser = asyncHandler( async(req,res) => {
-    return res.json( 
+    return res.status(200)
+    .json( 
         new ApiResponse(200 , 
         req.user , 
         "User Fetch Successful")
@@ -252,7 +253,7 @@ const updateUserDetails = asyncHandler( async(req,res) => {
     }
 
     const curruser = await User.findByIdAndUpdate(
-        req.user._id ,
+        req.user?._id ,
         {
             $set : {
                 fullname , 
@@ -272,6 +273,7 @@ const updateUserDetails = asyncHandler( async(req,res) => {
     )
 })
 
+        //* user middleware (in Routes) - Multer
 const updateAvatar = asyncHandler( async(req,res) => {
     const avatarLocalPath = req.file?.path
     if (!avatarLocalPath){
@@ -279,12 +281,14 @@ const updateAvatar = asyncHandler( async(req,res) => {
     }
 
     const newAvatar = await uploadOnCloudinary(avatarLocalPath);
-    if (!newAvatar){
+    if (!newAvatar.url){
         throw new ApiError(500 , "Something went wrong - while updating/uploading avatar to Cloudinary");
     }
+            //* Deleting old Avatar
+    await destroyOnCloudinary(req.user?.coverImage)
 
     const curruser = await User.findByIdAndUpdate(
-        req.user._id,
+        req.user?._id,
         {
             $set : {
                 avatar : newAvatar.url
@@ -308,12 +312,15 @@ const updateCoverImage = asyncHandler( async(req,res) => {
     }
 
     const newCoverImage = await uploadOnCloudinary(coverImageLocalPath);
-    if (!newCoverImage){
+    if (!newCoverImage.url){
         throw new ApiError(500 , "Something went wrong - while updating/uploading avatar to Cloudinary");
     }
 
+        //* Deleting old Avatar
+    await destroyOnCloudinary(req.user?.coverImage)
+
     const curruser = await User.findByIdAndUpdate(
-        req.user._id,
+        req.user?._id,
         {
             $set : {
                 avatar : newCoverImage.url
