@@ -285,7 +285,7 @@ const updateAvatar = asyncHandler( async(req,res) => {
         throw new ApiError(500 , "Something went wrong - while updating/uploading avatar to Cloudinary");
     }
             //* Deleting old Avatar
-    await destroyOnCloudinary(req.user?.coverImage)
+    await destroyOnCloudinary(req.user?.avatar)
 
     const curruser = await User.findByIdAndUpdate(
         req.user?._id,
@@ -316,7 +316,7 @@ const updateCoverImage = asyncHandler( async(req,res) => {
         throw new ApiError(500 , "Something went wrong - while updating/uploading avatar to Cloudinary");
     }
 
-        //* Deleting old Avatar
+        //* Deleting old Cover Image
     await destroyOnCloudinary(req.user?.coverImage)
 
     const curruser = await User.findByIdAndUpdate(
