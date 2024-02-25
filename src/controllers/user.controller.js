@@ -337,6 +337,73 @@ const updateCoverImage = asyncHandler( async(req,res) => {
     )
 })
 
+const getChannelDetails = asyncHandler(async(req, res) => {
+    const {username} = req.params ;                         // channel name is taken from 'URL'
+    if (!username?.trim()){
+        throw new ApiError(400, "Username misssing - URL");
+    }
+
+    // aggregate( [ {$match:},{$lookup},{$addFields},{$project} ] )
+    const channel = User.aggregate([
+        {
+            $match : {
+                username : username?.toLowerCase()
+            }
+        },
+        {
+            $lookup : {
+                from : "subscriptions",                     // User <-> Subscription Model
+                localField : "_id",
+                foreignField : "channel",                   //! look for same Channel name -> to get count(Subsribers)
+                as : "subscribers"
+            }
+        },
+        {
+            $lookup : {
+                from : "subscriptions",                     //* within MongoDB 'Subscription' -> subscriptions (toLower & plural)
+                localField : "_id",
+                foreignField : "subscriber",
+                as : "subscribedTo"
+            }
+        },
+        {
+            $addFields : {
+                subscribersCount : {$size : "$subscribers"},
+                channelsSubscribedToCount : {$size : "$subscribedTo"},
+                isSubscribed : {
+                    $cond : {
+                        if : { $in : [req.user?._id , "$subscriptions.subscriber" ] },      //! Syntax -> imp PRACTICE
+                        then : true,
+                        else : false
+                    }
+                }
+            }
+        },
+        {
+            $project : {                                //  turn flag to "1" if needs to be PROJECTed
+                username : 1,
+                fullname : 1,
+                email : 1,
+                avatar : 1,
+                coverImage : 1,
+                subscribersCount : 1,
+                channelsSubscribedToCount :  1,
+                isSubscribed: 1,
+            }
+        }
+    ]);
+
+    if (! channel?.length){
+        throw new ApiError(404, "Channel not found");
+    }
+    console.log(channel);               //*  aggregate returns 'array of Objects' - Here Channel contains 'single object'
+
+    return res.status(200)
+    .json( 
+        new ApiResponse(200, channel[0], "Channel Details Fetch Successful")
+    )
+})
+
 export {userRegister, 
     userLogin , 
     userLogout , 
