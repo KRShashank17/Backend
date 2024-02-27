@@ -35,7 +35,7 @@ router.route('/logout').post( verifyJWT , userLogout);
 router.route('/refresh-token').post(refreshAccessToken);
 
 router.route('/change-password').post(verifyJWT , changePassword);
-router.route('/current-user').post(verifyJWT, getCurrentUser); 
+router.route('/current-user').get(verifyJWT, getCurrentUser); 
 router.route('/update-account').patch(verifyJWT, updateUserDetails);        // patch -> updates only specified fields
 
 router.route('/update-avatar').patch(verifyJWT, upload.single('avatar') , updateAvatar);        

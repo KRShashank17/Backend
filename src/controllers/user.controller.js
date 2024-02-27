@@ -4,6 +4,7 @@ import {User} from "../models/user.model.js"
 import {destroyOnCloudinary, uploadOnCloudinary} from '../utils/cloudinary.js'
 import {ApiResponse} from "../utils/apiResponse.js"
 import jwt from "jsonwebtoken"
+import mongoose from "mongoose"
 
 const generateRefreshTokenAccessToken = async (userId) => {
     try {
@@ -163,7 +164,8 @@ const userLogout = asyncHandler( async(req,res) => {
     await User.findByIdAndUpdate(
         req.user._id ,
         {
-            $unset : { refreshToken : 1 }
+            // $unset : { refreshToken : 1 }               // uset -> removes field from document
+            $set : {refreshToken : null}                   // this too works  //! setting undefined throws error
         },
         { new : true }
     )
@@ -344,7 +346,7 @@ const getChannelDetails = asyncHandler(async(req, res) => {
     }
 
     // aggregate( [ {$match:},{$lookup},{$addFields},{$project} ] )
-    const channel = User.aggregate([
+    const channel = await User.aggregate([
         {
             $match : {
                 username : username?.toLowerCase()
@@ -372,7 +374,7 @@ const getChannelDetails = asyncHandler(async(req, res) => {
                 channelsSubscribedToCount : {$size : "$subscribedTo"},
                 isSubscribed : {
                     $cond : {
-                        if : { $in : [req.user?._id , "$subscriptions.subscriber" ] },      //! Syntax -> imp PRACTICE
+                        if : { $in : [req.user?._id , "$subscribers.subscriber" ] },      //! Syntax -> imp PRACTICE
                         then : true,
                         else : false
                     }
@@ -424,18 +426,18 @@ const getWatchHistory = asyncHandler(async(req, res) => {
                             from : "users",
                             localField : "owner",       // videos.owner <-> users._id
                             foreignField : "_id",
-                            as : "owner"
-                        },
-
-                        pipeline : [
-                            {
-                                $project : {
-                                    fullname : 1,
-                                    username : 1,
-                                    avatar : 1
+                            as : "owner",
+                            
+                            pipeline : [
+                                {
+                                    $project : {
+                                        fullname : 1,
+                                        username : 1,
+                                        avatar : 1
+                                    }
                                 }
-                            }
-                        ]
+                            ]
+                        }
                     },
                     {
                         $addFields : {
