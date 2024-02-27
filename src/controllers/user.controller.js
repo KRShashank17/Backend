@@ -404,6 +404,61 @@ const getChannelDetails = asyncHandler(async(req, res) => {
     )
 })
 
+const getWatchHistory = asyncHandler(async(req, res) => {
+    const user = await User.aggregate([
+        {
+            $match : {
+                _id : new mongoose.Types.ObjectId( req.user._id )       // req.user._id is "object('String_id')" -> only be parsed via Mongoose
+            },
+        },
+        {
+            $lookup : {
+                from : "videos",
+                localField : "watchHistory",            // users.watchHistory <-> videos._id
+                foreignField : "_id",
+                as : "watchHistory", 
+
+                pipeline : [
+                    {
+                        $lookup : {
+                            from : "users",
+                            localField : "owner",       // videos.owner <-> users._id
+                            foreignField : "_id",
+                            as : "owner"
+                        },
+
+                        pipeline : [
+                            {
+                                $project : {
+                                    fullname : 1,
+                                    username : 1,
+                                    avatar : 1
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        $addFields : {
+                            owner : {
+                                $first : "$owner"       // keeping owner[0] into owner
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ])
+
+    res.status(200)
+    .json(
+        new ApiResponse(
+            200 ,
+            user[0].watchHistory,
+            "Watch History Fetch Successful"
+        )
+    )
+})
+
 export {userRegister, 
     userLogin , 
     userLogout , 
@@ -412,5 +467,7 @@ export {userRegister,
     getCurrentUser,
     updateUserDetails,
     updateAvatar,
-    updateCoverImage
+    updateCoverImage,
+    getChannelDetails,
+    getWatchHistory
 }
