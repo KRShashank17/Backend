@@ -19,3 +19,19 @@
  * Tweet creation and publishing
  * Viewing user tweets
  * Updating and deleting tweets
+
+## Subscription Management:
+* Subscribing to channels
+* Viewing subscriber and subscribed channel lists
+
+## Playlist Management:
+* Creating, updating, and deleting playlists
+* Adding and removing videos from playlists
+* Viewing user playlists
+
+## Like Management:
+* Liking and unliking videos, comments, and tweets
+* Viewing liked videos
+
+## Comment Management:
+* Adding, updating, and deleting comments on videos
