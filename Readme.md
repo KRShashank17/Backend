@@ -35,3 +35,9 @@
 
 ## Comment Management:
 * Adding, updating, and deleting comments on videos
+
+# Technologies Used
+* Node.js
+* Express.js
+* MongoDB
+* Cloudinary
