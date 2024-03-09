@@ -4,7 +4,7 @@
 
 [Model Link](https://app.eraser.io/workspace/MiksaRNHW9GtxAyGr7CM)
 
-# Features
+# Features 
 ## User Management:
   * Registration, login, logout, password reset
   * Profile management (avatar, cover image, details)
