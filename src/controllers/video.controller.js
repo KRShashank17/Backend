@@ -3,6 +3,7 @@ import mongoose ,{ isValidObjectId } from "mongoose";
 import { asyncHandler } from "../utils/asyncHandler";
 import { ApiResponse } from "../utils/apiResponse";
 import {Video} from "../models/video.model.js";
+import { destroyOnCloudinary } from "../utils/cloudinary.js";
 
 const getAllVideos = asyncHandler(async (req, res) => {
     const {page=1, limit=10, query, sortBy, sortType, userId} = req.query;
@@ -130,6 +131,41 @@ const publishAVideo = asyncHandler(async (req, res) => {
 
     return res.status(200)
              .json(new ApiResponse(200, videoUploaded, "Video Uploaded Successfully"));
+})
+
+const deleteVideo = asyncHandler(async (req, res) => {
+    const {videoId} = req.params;
+    if (!videoId){
+        throw new ApiError(400, "Video Id is required");
+    }
+
+    const video = await Video.findById(videoId);
+    if (!video){
+        throw new ApiError(404, "Video not found");
+    }
+
+    if (video?.owner.toString() !== req.user?._id.toString()){
+        throw new ApiError(401, "Unauthorized request");
+    }
+
+    const videoDeleted = await Video.findByIdAndDelete(videoId);
+    if (!videoDeleted){
+        throw new ApiError(500, "Failed to delete video - Something went wrong");
+    }
+
+    await destroyOnCloudinary(video.thumbnail.public_id);
+    await destroyOnCloudinary(video.videoFile.public_id , "video"); // specify video while deleting
+
+    await Like.deleteMany({
+        video : videoId
+    })
+
+    await Comment.deleteMany({
+        video : videoId
+    })
+
+    return res.status(200)
+            .json(new ApiResponse(200, videoDeleted, "Video Deleted Successfully"));
 })
 
 
