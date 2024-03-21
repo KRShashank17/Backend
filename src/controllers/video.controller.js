@@ -4,6 +4,8 @@ import { asyncHandler } from "../utils/asyncHandler";
 import { ApiResponse } from "../utils/apiResponse";
 import {Video} from "../models/video.model.js";
 import { destroyOnCloudinary } from "../utils/cloudinary.js";
+import { Like } from "../models/like.model.js";
+import { Comment } from "../models/comment.model.js";
 
 const getAllVideos = asyncHandler(async (req, res) => {
     const {page=1, limit=10, query, sortBy, sortType, userId} = req.query;
