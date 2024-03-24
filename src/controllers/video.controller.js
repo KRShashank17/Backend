@@ -88,6 +88,129 @@ const getAllVideos = asyncHandler(async (req, res) => {
               .json(new ApiResponse(200, videos, "Videos Fetch Successful"));
 })
 
+const getVideoById = asyncHandler(async (req, res) => {
+    const {videoId} = req.params;
+    if (!isValidObjectId(videoId)){
+        throw new ApiError(400, "Invalid Video Id");
+    }
+
+    if (!isValidObjectId(req.user?._id)){
+        throw new ApiError(400, "Invalid User Id");
+    }
+
+    const video = await Video.aggregate([
+        {
+            $match : {
+                _id : new mongoose.Types.ObjectId(videoId)
+            }
+        },
+        {
+            $lookup :{
+                from : "likes",
+                localField : "_id",
+                foreignField : "video",
+                as : "likes"
+            }
+        },
+        {
+            $lookup: {
+                from : "users",
+                localField: "owner",
+                foreignField: "_id",
+                as : "owner",
+
+                pipeline: [
+                    {
+                        $lookup : {
+                            from : "subscriptions",
+                            localField: "_id",
+                            foreignField: "channel",
+                            as : "subscribers"
+                        }
+                    },
+                    {
+                        $addFields: {
+                            subscribersCount : {
+                                $size : "$subscribers"
+                            },
+                            isSubscribed : {
+                                $cond : {
+                                    if : {
+                                        $in : [
+                                            req.user?._id,
+                                            "$subscribers.subscriber"
+                                        ]
+                                    },
+                                    then: true,
+                                    else: false
+                                }
+                            }
+                        }
+                    },
+                    {
+                        $project : {
+                            username : 1,
+                            "avatar.url": 1,
+                            subscribersCount : 1,
+                            isSubscribed: 1
+                        }
+                    },
+                    {
+                        $addFields:{
+                            likesCount : {
+                                $size : "$likes"
+                            },
+                            owner : {
+                                $first : "$owner"
+                            },
+                            isLiked : {
+                                $cond: {
+                                    if : { $in : [req.user?._id , "$likes.likedBy"]},
+                                    then : true,
+                                    else: false
+                                }
+                            }
+                        }
+                    },
+                    {
+                        $project:{
+                            "videoFile.url": 1,
+                            title: 1,
+                            description: 1,
+                            views: 1,
+                            createdAt: 1,
+                            duration: 1,
+                            comments: 1,
+                            owner: 1,
+                            likesCount: 1,
+                            isLiked: 1
+                        }
+                    }
+                ]
+            }
+        }
+    ])
+
+    if (!video){
+        throw new ApiError(500 , "failed to fetch video");
+    }
+
+    await Video.findByIdAndUpdate(videoId , {
+        $inc : {
+            views : 1
+        }
+    })
+
+    await User.findByIdAndUpdate(req.user?._id , {
+        $addtoSet: {
+            watchHistroy : videoId
+        }
+    })
+
+    return res.status(200)
+              .json(new ApiResponse(200, video[0], "Video Fetch Successful"));
+})
+
 
 // get video, upload on Cloudinary
 const publishAVideo = asyncHandler(async (req, res) => {

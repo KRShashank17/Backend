@@ -83,7 +83,8 @@ const updateTweet = asyncHandler(async(req, res) => {
              .json(new ApiResponse(200, newTweet, "Tweet updated successfully"))
 })
 
-export {createTweet ,
+export {
+    createTweet ,
     deleteTweet ,
     updateTweet 
 }
