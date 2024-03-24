@@ -154,39 +154,39 @@ const getVideoById = asyncHandler(async (req, res) => {
                             subscribersCount : 1,
                             isSubscribed: 1
                         }
-                    },
-                    {
-                        $addFields:{
-                            likesCount : {
-                                $size : "$likes"
-                            },
-                            owner : {
-                                $first : "$owner"
-                            },
-                            isLiked : {
-                                $cond: {
-                                    if : { $in : [req.user?._id , "$likes.likedBy"]},
-                                    then : true,
-                                    else: false
-                                }
-                            }
-                        }
-                    },
-                    {
-                        $project:{
-                            "videoFile.url": 1,
-                            title: 1,
-                            description: 1,
-                            views: 1,
-                            createdAt: 1,
-                            duration: 1,
-                            comments: 1,
-                            owner: 1,
-                            likesCount: 1,
-                            isLiked: 1
-                        }
                     }
                 ]
+            }
+        },
+        {
+            $addFields:{
+                likesCount : {
+                    $size : "$likes"
+                },
+                owner : {
+                    $first : "$owner"
+                },
+                isLiked : {
+                    $cond: {
+                        if : { $in : [req.user?._id , "$likes.likedBy"]},
+                        then : true,
+                        else: false
+                    }
+                }
+            }
+        },
+        {
+            $project:{
+                "videoFile.url": 1,
+                title: 1,
+                description: 1,
+                views: 1,
+                createdAt: 1,
+                duration: 1,
+                comments: 1,
+                owner: 1,
+                likesCount: 1,
+                isLiked: 1
             }
         }
     ])
@@ -296,5 +296,6 @@ const deleteVideo = asyncHandler(async (req, res) => {
 
 export {
     getAllVideos,
+    getVideoById,
     publishAVideo
 }
