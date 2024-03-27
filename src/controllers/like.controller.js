@@ -1,4 +1,4 @@
-import mongoose  from "mongoose";
+import mongoose, { isValidObjectId }  from "mongoose";
 import { asyncHandler } from "../utils/asyncHandler";
 import { ApiError } from "../utils/ApiError";
 import { ApiResponse } from "../utils/apiResponse";
@@ -29,6 +29,34 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
               .json(new ApiResponse(200, { isLiked : true}));
 })
 
+const toggleTweetLike = asyncHandler(async (req, res) => {
+    const {tweetId} = req.params;
+    if (! isValidObjectId(tweetId)){
+        throw new ApiError(400, "Invalid Tweet Id");
+    }
+
+    const likedAlready = await Like.findOne({
+        tweet : tweetId,
+        likedBy : req.user?._id
+    })
+
+    if (likedAlready){
+        await Like.findByIdAndDelete(likedAlready._id);
+
+        return res.status(200)
+                  .json(new ApiResponse(200, { tweetId, isLiked : false}))
+    }
+
+    await Like.create({
+        tweet : tweetId,
+        likedBy : req.user?._id
+    })
+
+    return res.status(200)
+              .json(new ApiResponse(200, { tweetId, isLiked : true}))
+})
+
 export {
-    toggleVideoLike
+    toggleVideoLike,
+    toggleTweetLike
 }
