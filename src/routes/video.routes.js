@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { upload } from "../middlewares/multer.middleware";
 import { verifyJWT } from "../middlewares/auth.middleware";
-import { getAllVideos,getVideoById, publishAVideo } from "../controllers/video.controller";
+import { deleteVideo, getAllVideos,getVideoById, publishAVideo } from "../controllers/video.controller";
 
 const router = Router();
 
@@ -16,7 +16,8 @@ router.route("/")
 
 // update , delete - yet to be implemented
 router.route("/v/:videoId")
-        .get(verifyJWT, getVideoById);
+        .get(verifyJWT, getVideoById)
+        .delete(verifyJWT, deleteVideo)
 
 // toggle route - yet to be implemented
 

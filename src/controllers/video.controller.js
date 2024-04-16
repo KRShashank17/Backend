@@ -294,8 +294,11 @@ const deleteVideo = asyncHandler(async (req, res) => {
 })
 
 
+
+
 export {
     getAllVideos,
     getVideoById,
-    publishAVideo
+    publishAVideo,
+    deleteVideo
 }
