@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { upload } from "../middlewares/multer.middleware";
 import { verifyJWT } from "../middlewares/auth.middleware";
-import { deleteVideo, getAllVideos,getVideoById, publishAVideo } from "../controllers/video.controller";
+import { deleteVideo, getAllVideos,getVideoById, publishAVideo, togglePublishStatus } from "../controllers/video.controller";
 
 const router = Router();
 
@@ -20,5 +20,6 @@ router.route("/v/:videoId")
         .delete(verifyJWT, deleteVideo)
 
 // toggle route - yet to be implemented
+router.route("/toggle/publish/:videoId").patch(verifyJWT, togglePublishStatus)
 
 export default router;
