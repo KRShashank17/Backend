@@ -19,7 +19,6 @@ router.route("/v/:videoId")
         .get(verifyJWT, getVideoById)
         .delete(verifyJWT, deleteVideo)
 
-// toggle route - yet to be implemented
 router.route("/toggle/publish/:videoId").patch(verifyJWT, togglePublishStatus)
 
 export default router;
